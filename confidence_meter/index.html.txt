@@ -1,0 +1,50 @@
+index.html
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>CommitCheck — Honest Task Commitment</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <main class="container">
+    <header>
+      <span class="badge">CommitCheck</span>
+      <h1>Add a Task You Actually Mean</h1>
+      <p class="subtitle">Stop overcommitting. Decide what you're really going to finish today.</p>
+    </header>
+
+    <section class="card">
+      <label for="taskInput">What do you want to commit to?</label>
+      <input
+        type="text"
+        id="taskInput"
+        placeholder="e.g., Finish Flagsmith demo video script"
+        maxlength="100"
+      />
+
+      <!-- Variant UI: Shown only when confidence_meter === 'variant' -->
+      <div id="confidenceBox" class="confidence-box hidden">
+        <p class="prompt-label">How confident are you that you'll finish this today?</p>
+        <div class="confidence-options">
+          <button type="button" class="conf-btn" data-level="20%">20% (Maybe)</button>
+          <button type="button" class="conf-btn" data-level="50%">50% (Likely)</button>
+          <button type="button" class="conf-btn" data-level="90%">90% (Locked In)</button>
+        </div>
+      </div>
+
+      <button id="commitBtn" class="primary-btn" disabled>Loading experiment...</button>
+      <p id="statusMsg" class="status-msg"></p>
+    </section>
+
+    <section class="list-section">
+      <h2>Committed Tasks (<span id="taskCount">0</span>)</h2>
+      <ul id="taskList"></ul>
+    </section>
+  </main>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
