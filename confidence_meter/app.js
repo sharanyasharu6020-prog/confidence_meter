@@ -1,5 +1,3 @@
-app.js
-
 import flagsmith from "https://esm.sh/@flagsmith/flagsmith@12.4.0";
 
 // 1. Replace with your Flagsmith Client-side Environment Key
