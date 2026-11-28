@@ -33,16 +33,28 @@ async function initExperiment() {
   try {
     await flagsmith.init({
       environmentID: ENVIRONMENT_ID,
-      identity: userId,
+      enableEvents: true,
     });
 
-    const rawValue = flagsmith.getValue("confidence_meter");
-    const normalized = String(rawValue ?? "").toLowerCase();
+    await flagsmith.identify(userId);
 
+    const expFlag = typeof flagsmith.getExperimentFlag === "function"
+      ? flagsmith.getExperimentFlag("confidence_meter")
+      : flagsmith.getValue("confidence_meter");
+
+    const rawValue = typeof expFlag === "object" && expFlag !== null
+      ? (expFlag.value ?? expFlag.enabled ?? "")
+      : expFlag;
+
+    const normalized = String(rawValue ?? "").toLowerCase();
     activeVariant = normalized.includes("variant") ? "variant" : "control";
 
     if (activeVariant === "variant") {
       confidenceBox.classList.remove("hidden");
+    }
+
+    if (typeof flagsmith.flushEvents === "function") {
+      await flagsmith.flushEvents();
     }
 
     commitBtn.disabled = false;
@@ -71,7 +83,6 @@ commitBtn.addEventListener("click", async () => {
   try {
     if (typeof flagsmith.trackEvent === "function") {
       await flagsmith.trackEvent("task_committed", {
-        identifier: userId,
         metadata: {
           variant: activeVariant,
           confidence: selectedConfidence || "none",
