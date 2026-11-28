@@ -1,9 +1,7 @@
 import flagsmith from "https://esm.sh/@flagsmith/flagsmith@12.4.0";
 
-// 1. Replace with your Flagsmith Client-side Environment Key
 const ENVIRONMENT_ID = "Kjq4Pfn7q6uP7zjos9Z6Az";
 
-// 2. Generate & persist a stable user identifier so exposures and conversions join properly
 let userId = localStorage.getItem("commitcheck_user_id");
 if (!userId) {
   userId = "user_" + crypto.randomUUID();
@@ -22,7 +20,6 @@ let activeVariant = "control";
 let selectedConfidence = null;
 let tasks = [];
 
-// Handle confidence pill selection (for variant users)
 confButtons.forEach((btn) => {
   btn.addEventListener("click", () => {
     confButtons.forEach((b) => b.classList.remove("selected"));
@@ -32,21 +29,17 @@ confButtons.forEach((btn) => {
   });
 });
 
-// Initialize Flagsmith with experimentation events enabled
 async function initExperiment() {
   try {
     await flagsmith.init({
       environmentID: ENVIRONMENT_ID,
       identity: userId,
-      enableEvents: true,
     });
 
-    // Evaluate the multivariate experiment flag (records exposure automatically)
-    const variantValue = flagsmith.getValue("confidence_meter", {
-      fallback: "control",
-    });
+    const rawValue = flagsmith.getValue("confidence_meter");
+    const normalized = String(rawValue ?? "").toLowerCase();
 
-    activeVariant = variantValue === "variant" ? "variant" : "control";
+    activeVariant = normalized.includes("variant") ? "variant" : "control";
 
     if (activeVariant === "variant") {
       confidenceBox.classList.remove("hidden");
@@ -61,7 +54,6 @@ async function initExperiment() {
   }
 }
 
-// Handle task commitment + send conversion event to Flagsmith
 commitBtn.addEventListener("click", async () => {
   const title = taskInput.value.trim();
   if (!title) {
@@ -76,17 +68,22 @@ commitBtn.addEventListener("click", async () => {
     return;
   }
 
-  // Record conversion event in Flagsmith
-  flagsmith.trackEvent("task_committed", {
-    identifier: userId,
-    metadata: {
-      variant: activeVariant,
-      confidence: selectedConfidence || "none",
-    },
-  });
+  try {
+    if (typeof flagsmith.trackEvent === "function") {
+      await flagsmith.trackEvent("task_committed", {
+        identifier: userId,
+        metadata: {
+          variant: activeVariant,
+          confidence: selectedConfidence || "none",
+        },
+      });
+    }
 
-  if (typeof flagsmith.flushEvents === "function") {
-    await flagsmith.flushEvents();
+    if (typeof flagsmith.flushEvents === "function") {
+      await flagsmith.flushEvents();
+    }
+  } catch (eventErr) {
+    console.error("Failed to send task_committed event:", eventErr);
   }
 
   tasks.push({
@@ -114,7 +111,7 @@ function renderTasks() {
 }
 
 function escapeHtml(str) {
-  return str.replace(/[&<>"']/g, (m) => ({
+  return str.replace(/[&<>'"]/g, (m) => ({
     "&": "&amp;",
     "<": "&lt;",
     ">": "&gt;",
